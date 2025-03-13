@@ -9,6 +9,7 @@ title: "Parallel Computing Assignment"
 Calculating mean and variance of of a random sample generated from an exponential distribution with mean = 1.
 
 ```{r}
+#| warning: false
 library(foreach)
 library(doParallel)
 library(knitr)
@@ -30,6 +31,7 @@ kable(results)
 Comparing process time for bootstrapping samples using parallel versus serial processing.
 
 ```{r}
+#| warning: false
 library(MASS)
 gal <- galaxies
 
@@ -71,3 +73,42 @@ kable(time_results, caption="System times for different processes")
 ```
 
 ### Question 3:
+
+Estimating the coverage of a percentile bootstrap confidence interval for an exponential distribution with mean 1:
+
+```{r}
+mean_true <- 1
+cl <- makeCluster(3)
+registerDoParallel(cl)
+
+result <- foreach(i = 1:1000, .combine = c) %dopar% {
+    data <- rexp(50,1)
+    boot_means <- replicate(1000, mean(sample(data, 50, replace = TRUE)))
+    
+    l <- quantile(boot_means, 0.025)
+    u <- quantile(boot_means, 0.975)
+    
+    (mean_true >= l) & (mean_true <= u)
+}
+
+coverage <- mean(result)
+print(coverage)
+```
+
+### Question 4:
+
+Iterating over 3 vectors of normally distributed random numbers with 5 variables each, and calculating the maximum value in each vector.
+
+```{r}
+#| warning: false
+library(iterators)
+
+set.seed(1234)
+result_q4 <- foreach(i=1:3, .combine=cbind)%dopar%{
+  vecs <- irnorm(1, count=5)
+  max(nextElem(vecs))
+}
+
+colnames(result_q4) <- c("V1", "V2", "V3")
+kable(result_q4, caption="Maximum Values for each Vector")
+```
