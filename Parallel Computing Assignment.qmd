@@ -2,13 +2,25 @@
 title: "Parallel Computing Assignment"
 ---
 
-## Quarto
+## Parallel Computing Assignment
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+### Question 1:
+
+Calculating mean and variance of of a random sample generated from an exponential distribution with mean = 1.
 
 ```{r}
-if (!requireNamespace("remotes", quietly = TRUE)) {
-  install.packages("remotes")
+library(foreach)
+library(doParallel)
+library(knitr)
+
+cl <- makeCluster(3)
+registerDoParallel(cl)
+
+result <- foreach(i = 1:100, .combine=rbind) %dopar% {
+  rexp(1,1)
 }
-remotes::install_github("MiguelRodo/projrsimple")
+
+results <- rbind(mean(result),var(result))
+rownames(results) <- c("Mean", "Variance")
+kable(results)
 ```
