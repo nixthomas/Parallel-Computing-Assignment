@@ -24,3 +24,32 @@ results <- rbind(mean(result),var(result))
 rownames(results) <- c("Mean", "Variance")
 kable(results)
 ```
+
+### Question 2:
+
+Comparing process time for bootstrapping samples using parallel versus serial processing.
+
+```{r}
+library(MASS)
+gal <- galaxies
+
+time_parallel <- system.time({
+  result <- foreach(i = 1:1000, .combine = c, .packages = "MASS") %dopar% {
+    bootstrap <- sample(gal, 50)
+    median(bootstrap)
+  }
+})
+
+tboot <- numeric()
+
+time_bootstrap <- system.time({
+  for (i in 1:10000){
+  bootstrap <- sample(gal, 50)
+  tboot[i] <- median(bootstrap)
+  }
+})
+
+time_results <- rbind(time_parallel,time_bootstrap)
+rownames(time_results) <- c("Parallel Time", "Boostrap Time")
+kable(time_results)
+```
