@@ -33,23 +33,41 @@ Comparing process time for bootstrapping samples using parallel versus serial pr
 library(MASS)
 gal <- galaxies
 
-time_parallel <- system.time({
-  result <- foreach(i = 1:1000, .combine = c, .packages = "MASS") %dopar% {
-    bootstrap <- sample(gal, 50)
-    median(bootstrap)
+B <- 10000
+n <- length(gal)
+
+cl <- makeCluster(3)
+registerDoParallel(cl)
+
+t1 <- system.time(
+  {
+    median_boot <- foreach(i = 1:B, .combine = rbind) %do% {
+  median(sample(gal, n, replace = TRUE))
+    }
   }
-})
+)
 
-tboot <- numeric()
-
-time_bootstrap <- system.time({
-  for (i in 1:10000){
-  bootstrap <- sample(gal, 50)
-  tboot[i] <- median(bootstrap)
+t2 <- system.time(
+  {
+    median_boot <- foreach(i = 1:B, .combine = rbind) %dopar% {
+      median(sample(gal, n, replace=TRUE))
+    }
   }
-})
+)
 
-time_results <- rbind(time_parallel,time_bootstrap)
-rownames(time_results) <- c("Parallel Time", "Boostrap Time")
-kable(time_results)
+t3 <- system.time(
+  {
+   median_boot <- foreach(i = 1:(B/1000), .combine = rbind) %dopar% {
+     replicate(1000, median(sample(gal, n, replace=TRUE)))
+   } 
+  }
+)
+
+
+time_results <- rbind(t1, t2, t3)
+rownames(time_results) <- c("For serial processing", "For parallel processing", "For 1000 bootstrap samples at a time")
+
+kable(time_results, caption="System times for different processes")
 ```
+
+### Question 3:
